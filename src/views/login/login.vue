@@ -1,5 +1,4 @@
 <template>
-<<<<<<< HEAD
   <section id="login">
     <div class="login-wrap">
       <ul class="menu-tab">
@@ -177,17 +176,4 @@ export default {
     background-color: rgba(0, 0, 0, 0.1);
   }
 }
-=======
-    <section id = "login">
-        <div>登录界面</div>
-    </section>
-</template>
-<script>
-</script>
-<style lang="scss" scoped>
- #login{
-     height: 96vh;
-     background-color:#344a5f;
- }
->>>>>>> d801b90c2335fe15fe1c5f6215c335c5d109ad34
 </style>
