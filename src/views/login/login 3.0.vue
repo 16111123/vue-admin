@@ -11,7 +11,7 @@
           {{ item.txt }}
         </li>
       </ul>
-      
+    <!-- 表单 start-->
       <el-form
         :model="ruleForm"
         status-icon
@@ -48,11 +48,11 @@
         <el-form-item label="验证码" prop="code">
         <el-row :gutter="20">
           <el-col :span="13"><el-input v-model="ruleForm.code"></el-input></el-col>
-          <el-col :span="2"><el-button type="success" class="block" @click="getSms()" :disabled="codeButtonStatus.status" >{{codeButtonStatus.text}}</el-button></el-col>
+          <el-col :span="1"><el-button type="success" plain>发送</el-button></el-col>
         </el-row>
       </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="submitForm('ruleForm')" v-bind:disabled="loginButtonStatus">{{ pmodel === 'login' ? '登录' : '注册'}}</el-button>
+          <el-button type="primary" @click="submitForm('ruleForm')">提交</el-button>
           <el-button @click="resetForm('ruleForm')">重置</el-button>
         </el-form-item>
       </el-form>
@@ -61,13 +61,12 @@
   </section>
 </template>
 <script>
-import sha1 from 'js-sha1'
-import { GetSms, Register, Login } from "@/api/login"
-import { reactive, ref, isRef, toRefs, onMounted } from '@vue/composition-api'
+import { reactive, ref } from '@vue/composition-api'
 import { stripscript, stripUsename, stripPassword, stripCode} from '@/utils/validate';
 export default {
   name: 'login',
   setup(props,context){
+
     var checkCode = (rule, value, callback) => {
       ruleForm.code=stripscript(value)
       value =  ruleForm.code
@@ -108,7 +107,8 @@ export default {
           callback();
         }
       };
-// *****************************************************
+
+
 
     const menuTab = reactive ([
         { txt: '登录', current: true, type: 'login' },
@@ -121,22 +121,7 @@ export default {
         passwords: '',
         code: ''
     })
-    // 登录按钮是否禁用
-    const loginButtonStatus =  ref(true)
-    // 验证码模块是否禁用
-     const codeButtonStatus = reactive (
-        { 
-          status: false,
-          text: '获取验证码'
-        }
-    )
     const pmodel = ref('login')
-    // 倒计时
-    const timer = ref(null)
-
-
-
-    // *************************************************************
     // 声明函数
     const toggleMenu = (data => {
       menuTab.forEach(e => {
@@ -144,157 +129,25 @@ export default {
       });
       data.current = true;
       pmodel.value = data.type;
-      resetFromData()
-      countDownClear()
     })
-    // 清除表单数据
-    const resetFromData = (() =>{
-      context.refs.ruleForm.resetFields();
-    })
-
-    //更新按钮的状态
-    const updataButtonStatus = ((params) => {
-      codeButtonStatus.status = params.status
-      codeButtonStatus.text = params.text
-    })
-    /**
-     获取验证码
-    */
-    const getSms = (() => {
-      
-      if(ruleForm.username == ''){
-        context.root.$message.error('邮箱不能为空');
-        return false
-      }
-      if (!stripUsename(ruleForm.username)) {
-        context.root.$message.error('邮箱格式错误');
-        return false
-      }
-      // 获取验证码的传入的值
-      let requestData = {
-        username: ruleForm.username,
-        model: pmodel.value
-      }
-      // 修改发送验证码的按钮是否禁用
-      updataButtonStatus({
-        status: true,
-        text: '发送中'
-      })
-      setTimeout(() => {
-        GetSms(requestData).then(response => {
-          let data = response.data
-          context.root.$message({
-            message: data.message,
-            type: 'success'
-          })
-          // 启用登录注册按钮
-          loginButtonStatus.value = false
-          // 定时器 倒计时
-          countDown(30)
-        }).catch(error => {
-
-        })
-        //延迟的时间
-
-      }, 3000)
-      
-    })
-    // 提交
     const submitForm = (formName => {
       context.refs[formName].validate((valid) => {
         if (valid) {
-          pmodel.value == 'login' ? login() : register()
+          alert('submit!');
         } else {
           console.log('error submit!!');
           return false;
         }
       });
     })
-    // 登录
-    const login =(() => {
-       let redata = {
-        username: ruleForm.username,
-        password: sha1(ruleForm.password),
-        code: ruleForm.code
-      }
-      Login(redata).then(response =>{
-
-      }).catch(error => {
-
-      })
-    })
-
-
-    // 注册
-    const register =(() => {
-      let redata = {
-        username: ruleForm.username,
-        password: sha1(ruleForm.password),
-        code: ruleForm.code
-      }
-      Register(redata).then(response => {
-        let data = response.data
-        context.root.$message({
-          message: data.message,
-          type: 'success'
-        })
-        toggleMenu(menuTab[0])
-        countDownClear()
-      }).catch(error => {
-
-      })
-    })
-
-    // 重置
     const resetForm = (formName =>{
        context.refs[formName].resetFields();
     }) 
-    // 规则
     const  rules = reactive( {
         username: [{ validator: validateUsername, trigger: 'blur' }],
         password: [{ validator: validatePass, trigger: 'blur' }],
         code: [{ validator: checkCode, trigger: 'blur' }],
         passwords: [{ validator: validatePass2, trigger: 'blur' }],
-    })
-    /**
-     倒计时
-    */
-    const countDown = ((number) =>{
-      if(timer.value) { clearInterval(timer.value)}
-      // settimeout 1
-      // setInterval  n
-      let time = number
-      timer.value = setInterval(() => {
-        time--
-        if( time === 0){
-          clearInterval(timer.value)
-           // 修改发送验证码的按钮是否禁用
-            updataButtonStatus({
-              status: false,
-              text: '再次发送'
-            })
-        } else {
-          codeButtonStatus.text = `倒计时${time}秒`
-        }
-      },1000)
-
-    })
-    /*
-    * 清楚倒计时
-    */
-    const countDownClear = (() =>{
-      updataButtonStatus({
-        status: false,
-        text: '获取验证码'
-      })
-      // 清楚定时器
-      clearInterval(timer.value)
-    })
-
-
-
-    onMounted(() => {
-
     })
     return {
       menuTab,
@@ -303,10 +156,7 @@ export default {
       submitForm,
       resetForm,
       rules,
-      ruleForm,
-      getSms,
-      loginButtonStatus,
-      codeButtonStatus
+      ruleForm
     }
 
   }
